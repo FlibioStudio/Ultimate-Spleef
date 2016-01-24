@@ -1,7 +1,8 @@
 package me.flibio.ultimatespleef.commands;
 
-import me.flibio.minigamecore.arena.Arena;
 import me.flibio.minigamecore.file.FileManager;
+import me.flibio.ultimatespleef.UArena;
+import me.flibio.ultimatespleef.UArena.ArenaShapeType;
 import me.flibio.ultimatespleef.USpleef;
 import me.flibio.ultimatespleef.utils.TextUtils;
 
@@ -213,7 +214,7 @@ public class CreateCommand implements CommandExecutor {
 	private void saveArena() {
 		FileManager fileManager = USpleef.access.minigame.getFileManager();
 		if(dedicatedMode) {
-			Arena arena = new Arena("arena",game,USpleef.access);
+			UArena arena = new UArena("arena", ArenaShapeType.CIRCLE);
 			arena.getData().setVariable("dedicatedServer", true);
 			arena.getData().setLocation("lobbySpawn", lobbySpawn);
 			arena.getData().setLocation("lobby",circleCenter);
@@ -225,7 +226,7 @@ public class CreateCommand implements CommandExecutor {
 			USpleef.access.minigame.getArenaManager().addArena(arena);
 			fileManager.saveArena(arena, "arenas");
 		} else {
-			Arena arena = new Arena(arenaName,game,USpleef.access);
+			UArena arena = new UArena(arenaName, ArenaShapeType.CIRCLE);
 			arena.getData().setVariable("dedicatedServer", false);
 			arena.getData().setLocation("lobbySpawn", lobbySpawn);
 			arena.getData().setLocation("lobby",circleCenter);
