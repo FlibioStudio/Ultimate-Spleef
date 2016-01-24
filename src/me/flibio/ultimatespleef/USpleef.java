@@ -47,6 +47,7 @@ public class USpleef {
 			logger.info("Found arena: "+arenaData.getName());
 			UArena uarena = new UArena(arenaData.getName(),ArenaShapeType.valueOf(arenaData.getVariable("shape").get().toString()));
 			uarena.overrideData(arenaData);
+			//TODO - Check if the arena has all the necessary data
 			minigame.getArenaManager().addArena(uarena);
 		}
 	}

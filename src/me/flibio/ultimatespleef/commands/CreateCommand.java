@@ -72,6 +72,7 @@ public class CreateCommand implements CommandExecutor {
 		Player player = (Player) source;
 		this.player = player;
 		player.sendMessage(TextUtils.message("Welcome to the setup wizard! Which mode would you like the new arena in?"));
+		//TODO - Check if there is already a dedicated arena in the server
 		creationState = CreationState.ARENA_MODE;
 		player.sendMessage(TextUtils.option(c -> {
 			if(creationState.equals(CreationState.ARENA_MODE)) {
@@ -217,7 +218,6 @@ public class CreateCommand implements CommandExecutor {
 			UArena arena = new UArena("arena", ArenaShapeType.CIRCLE);
 			arena.getData().setVariable("dedicatedServer", true);
 			arena.getData().setLocation("lobbySpawn", lobbySpawn);
-			arena.getData().setLocation("lobby",circleCenter);
 			arena.getData().setVariable("shape", arenaShape.toString());
 			if(arenaShape.equals(ArenaShape.CIRCLE)) {
 				arena.getData().setLocation("circlecenter",circleCenter);
@@ -229,7 +229,7 @@ public class CreateCommand implements CommandExecutor {
 			UArena arena = new UArena(arenaName, ArenaShapeType.CIRCLE);
 			arena.getData().setVariable("dedicatedServer", false);
 			arena.getData().setLocation("lobbySpawn", lobbySpawn);
-			arena.getData().setLocation("lobby",circleCenter);
+			arena.getData().setLocation("joinSign",joinSign);
 			arena.getData().setVariable("shape", arenaShape.toString());
 			if(arenaShape.equals(ArenaShape.CIRCLE)) {
 				arena.getData().setLocation("circlecenter",circleCenter);
