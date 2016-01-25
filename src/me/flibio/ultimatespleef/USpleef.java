@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
 
@@ -32,7 +32,7 @@ public class USpleef {
 	public static USpleef access;
 	
 	@Listener
-	public void onServerInitialize(GameInitializationEvent event) {
+	public void onServerInitialize(GameStartingServerEvent event) {
 		logger.info("Ultimate Spleef v"+version+" is enabling!");
 		access = this;
 		
@@ -45,8 +45,10 @@ public class USpleef {
 		
 		for(ArenaData arenaData : fileManager.loadArenas("arenas")) {
 			logger.info("Found arena: "+arenaData.getName());
+			System.out.println(arenaData.getCustomLocations().keySet());
 			UArena uarena = new UArena(arenaData.getName(),ArenaShapeType.valueOf(arenaData.getVariable("shape").get().toString()));
 			uarena.overrideData(arenaData);
+			uarena.initialize();
 			//TODO - Check if the arena has all the necessary data
 			minigame.getArenaManager().addArena(uarena);
 		}

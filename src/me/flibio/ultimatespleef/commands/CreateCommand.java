@@ -33,7 +33,11 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class CreateCommand implements CommandExecutor {
-	
+	/**
+	 * TODO
+	 * Protect the arena
+	 * Dig hole under the arena
+	 */
 	public enum ArenaShape {
 		CIRCLE,RECTANGLE,CUSTOM
 	}
@@ -223,6 +227,7 @@ public class CreateCommand implements CommandExecutor {
 				arena.getData().setLocation("circlecenter",circleCenter);
 				arena.getData().setVariable("circlerad",radius);
 			}
+			arena.initialize();
 			USpleef.access.minigame.getArenaManager().addArena(arena);
 			fileManager.saveArena(arena, "arenas");
 		} else {
@@ -235,6 +240,7 @@ public class CreateCommand implements CommandExecutor {
 				arena.getData().setLocation("circlecenter",circleCenter);
 				arena.getData().setVariable("circlerad",radius);
 			}
+			arena.initialize();
 			USpleef.access.minigame.getArenaManager().addArena(arena);
 			fileManager.saveArena(arena,"arenas");
 		}
