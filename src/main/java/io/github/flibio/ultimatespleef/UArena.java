@@ -1,7 +1,28 @@
-package me.flibio.ultimatespleef;
-
-import me.flibio.minigamecore.arena.Arena;
-import me.flibio.minigamecore.arena.ArenaStates;
+/*
+ * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package io.github.flibio.ultimatespleef;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockTypes;
@@ -18,22 +39,23 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import io.github.flibio.minigamecore.arena.Arena;
+import io.github.flibio.minigamecore.arena.ArenaStates;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
 
 public class UArena extends Arena {
 	
 	private int minPlayers = 1;
 	private int maxPlayers = 8;
 	private Location<World> lobbySpawn;
-	private boolean dedicated;
 	private int circleRad;
 	private Location<World> circleCenter;
 	private ArrayList<Location<World>> blocks = new ArrayList<Location<World>>();
-	private ArrayList<Location<World>> usedLocs = new ArrayList<Location<World>>();;
+	private ArrayList<Location<World>> usedLocs = new ArrayList<Location<World>>();
 	
 	private int lobbyCountdownTime = 30;
 	private int gameCountdown = 10;
@@ -50,24 +72,67 @@ public class UArena extends Arena {
 	
 	public void initialize() {
 		lobbySpawn = getData().getLocation("lobbySpawn").get();
-		dedicated = (boolean) getData().getVariable("dedicatedServer").get();
-		circleRad = (int) getData().getVariable("circlerad").get();
+		circleRad = getData().getVariable("circlerad", Integer.class).get();
 		circleCenter = getData().getLocation("circlecenter").get();
 		blocks = getCircle(circleCenter,circleRad);
+
+		//On lobby countdown
+		addArenaStateRunnable(ArenaStates.LOBBY_COUNTDOWN, new Runnable() {
+			@Override
+			public void run() {
+				broadcast(Text.of(TextColors.GRAY,"Joining the game in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
+				lobbyCountdownTask = Sponge.getGame().getScheduler().createTaskBuilder().execute(r -> {
+					if(lobbyCountdownTime <= 5 && lobbyCountdownTime!=0){
+						broadcastSound(SoundTypes.NOTE_PIANO, 2, 1);
+						broadcast(Text.of(TextColors.GRAY,"Joining the game in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
+					}
+					if(lobbyCountdownTime==20||lobbyCountdownTime==10) {
+						broadcast(Text.of(TextColors.GRAY,"Joining the game in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
+					}
+					if(lobbyCountdownTime==0) {
+						//Start the game
+						broadcast(Text.of(TextColors.GRAY,"Joining the game!"));
+						lobbyCountdownTime = 30;
+						arenaStateChange(ArenaStates.GAME_COUNTDOWN);
+						lobbyCountdownTask.cancel();
+					}
+					lobbyCountdownTime--;
+				}).interval(1, TimeUnit.SECONDS).submit(USpleef.access);
+			}
+		});
 		
+		//On game countdown
 		addArenaStateRunnable(ArenaStates.GAME_COUNTDOWN, new Runnable() {
 			@Override
 			public void run() {
+				//Randomly distribute the players among the arena
+				for(Player player : getOnlinePlayers()) {
+					player.offer(Keys.GAME_MODE,GameModes.SPECTATOR);
+					player.offer(Keys.FLYING_SPEED,0.0);
+					Location<World> loc = blocks.get((new Random()).nextInt(blocks.size()));
+					while(usedLocs.contains(loc)) {
+						loc = blocks.get((new Random()).nextInt(blocks.size()));
+					}
+					usedLocs.add(loc);
+					player.setLocationSafely(loc.add(0, 2, 0));
+				}
+				usedLocs.clear();
 				//Countdown the game time
 				gameCountdown = 10;
+				broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,gameCountdown,TextColors.GRAY," seconds!"));
 				gameCountdownTask = Sponge.getGame().getScheduler().createTaskBuilder().execute(r -> {
-					broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,gameCountdown,TextColors.GRAY," seconds!"));
-					if(gameCountdown <= 5){
-						broadcastSound(SoundTypes.NOTE_BASS_GUITAR, 2, 1);
+					if(gameCountdown <= 5 && gameCountdown!=0){
+						broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,gameCountdown,TextColors.GRAY," seconds!"));
+						broadcastSound(SoundTypes.NOTE_PIANO, 2, 1);
 					}
-					if(lobbyCountdownTime<=0) {
+					if(gameCountdown<=0) {
+						for(Player player : getOnlinePlayers()) {
+							player.offer(Keys.GAME_MODE,GameModes.SURVIVAL);
+							player.offer(Keys.FLYING_SPEED,0.05);
+						}
 						arenaStateChange(ArenaStates.GAME_PLAYING);
 						gameCountdownTask.cancel();
+						broadcast(Text.of(TextColors.GRAY,"The game has begun!"));
 					}
 					gameCountdown--;
 				}).interval(1, TimeUnit.SECONDS).submit(USpleef.access);
@@ -90,36 +155,6 @@ public class UArena extends Arena {
 			if(getOnlinePlayers().size()>=minPlayers) {
 				//Start the countdown
 				arenaStateChange(ArenaStates.LOBBY_COUNTDOWN);
-				broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
-				lobbyCountdownTask = Sponge.getGame().getScheduler().createTaskBuilder().execute(r -> {
-					if(lobbyCountdownTime <= 10){
-						broadcastSound(SoundTypes.NOTE_PIANO, 2, 1);
-						broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
-					}
-					if(lobbyCountdownTime==20||lobbyCountdownTime==15) {
-						broadcast(Text.of(TextColors.GRAY,"The game starts in ",TextColors.YELLOW,lobbyCountdownTime,TextColors.GRAY," seconds!"));
-					}
-					if(lobbyCountdownTime==0) {
-						//Start the game
-						lobbyCountdownTime = 30;
-						for(Location<World> b : blocks) {
-							b.setBlockType(BlockTypes.QUARTZ_BLOCK);
-						}
-						//Randomly distribute the players among the arena
-						for(Player oPlayer : getOnlinePlayers()) {
-							Location<World> loc = blocks.get((new Random()).nextInt(blocks.size()));
-							while(usedLocs.contains(loc)) {
-								loc = blocks.get((new Random()).nextInt(blocks.size()));
-							}
-							usedLocs.add(loc);
-							oPlayer.setLocation(loc);
-						}
-						usedLocs.clear();
-						arenaStateChange(ArenaStates.GAME_COUNTDOWN);
-						lobbyCountdownTask.cancel();
-					}
-					lobbyCountdownTime--;
-				}).interval(1, TimeUnit.SECONDS).submit(USpleef.access);
 			}
 		} else {
 			player.kick(Text.of(TextColors.RED,"The game is in progress!"));
@@ -133,18 +168,30 @@ public class UArena extends Arena {
 		getOnlinePlayers().remove(player);
 		broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has left the game!"));
 		if(getArenaState().equals(ArenaStates.LOBBY_COUNTDOWN)&&getOnlinePlayers().size()<minPlayers) {
+			lobbyCountdownTask.cancel();
 			arenaStateChange(ArenaStates.LOBBY_WAITING);
 			Sponge.getGame().getServer().getBroadcastChannel().send(Text.of(TextColors.RED,"The lobby countdown has been cancelled!"));
 			lobbyCountdownTime = 30;
+		}
+		if(getArenaState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()==0) {
+			//Reset the arena
+			lobbyCountdownTime = 30;
+			for(Location<World> loc : blocks) {
+				loc.setBlockType(BlockTypes.QUARTZ_BLOCK);
+			}
+			gameCountdown = 10;
+			arenaStateChange(ArenaStates.LOBBY_WAITING);
+			broadcast(Text.of(TextColors.RED,"There are not enough people to play!"));
+		} if(getArenaState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()<minPlayers) {
+			
 		}
 	}
 	
 	@Listener
 	public void onMove(DisplaceEntityEvent.Move.TargetPlayer event) {
 		Player player = event.getTargetEntity();
-		if(getOnlinePlayers().contains(player)&&getArenaState().equals(ArenaStates.GAME_COUNTDOWN)) event.setCancelled(true);
 		if(getOnlinePlayers().contains(player)&&getArenaState().equals(ArenaStates.GAME_PLAYING)) {
-			if(player.getLocation().getBlockY()<circleCenter.getBlockY()) {
+			if(player.getLocation().getBlockY()<circleCenter.getBlockY()&&player.get(Keys.GAME_MODE).get().equals(GameModes.SURVIVAL)) {
 				broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has died!"));
 				player.setLocation(circleCenter.add(0, 10, 0));
 				player.offer(Keys.GAME_MODE, GameModes.SPECTATOR);
