@@ -24,14 +24,19 @@
  */
 package io.github.flibio.ultimatespleef.commands;
 
+import io.github.flibio.minigamecore.arena.ArenaManager;
+import io.github.flibio.ultimatespleef.UArena;
+import io.github.flibio.ultimatespleef.UltimateSpleef;
+import io.github.flibio.ultimatespleef.utils.TextUtils;
+import io.github.flibio.utils.commands.BaseCommandExecutor;
+import io.github.flibio.utils.commands.Command;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.command.CommandException;
-import org.spongepowered.api.command.CommandResult;
-import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.spec.CommandExecutor;
+import org.spongepowered.api.command.spec.CommandSpec;
+import org.spongepowered.api.command.spec.CommandSpec.Builder;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.mutable.tileentity.SignData;
 import org.spongepowered.api.entity.living.player.Player;
@@ -47,19 +52,16 @@ import org.spongepowered.api.util.blockray.BlockRayHit;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import io.github.flibio.minigamecore.arena.ArenaManager;
-import io.github.flibio.ultimatespleef.UArena;
-import io.github.flibio.ultimatespleef.UArena.ArenaShapeType;
-import io.github.flibio.ultimatespleef.USpleef;
-import io.github.flibio.ultimatespleef.utils.TextUtils;
-
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class CreateCommand implements CommandExecutor {
+@Command(aliases = {"create"}, permission = "ultimatespleef.admin.create")
+public class CreateCommand extends BaseCommandExecutor<Player> {
 
     /**
-     * TODO Protect the arena Dig hole under the arena
+     * TODO Protect the arena
+     * 
+     * Dig hole under the arena
      */
     public enum ArenaShape {
         CIRCLE, RECTANGLE, CUSTOM
@@ -95,24 +97,23 @@ public class CreateCommand implements CommandExecutor {
     private Location<World> circleCenter;
     private int radius;
 
-    public CreateCommand(Game game) {
-        this.game = game;
-        game.getEventManager().registerListeners(USpleef.access, this);
+    public CreateCommand() {
+        this.game = Sponge.getGame();
+        game.getEventManager().registerListeners(UltimateSpleef.access, this);
     }
 
     @Override
-    public CommandResult execute(CommandSource source, CommandContext args)
-            throws CommandException {
+    public Builder getCommandSpecBuilder() {
+        return CommandSpec.builder()
+                .executor(this);
+    }
 
-        if (!(source instanceof Player)) {
-            source.sendMessage(Text.builder("You must be a player to use /spleef!").color(TextColors.RED).build());
-            return CommandResult.success();
-        }
-
-        Player player = (Player) source;
+    @Override
+    public void run(Player player, CommandContext args) {
         this.player = player;
         player.sendMessage(TextUtils.message("Welcome to the setup wizard! Which mode would you like the new arena in?"));
-        // TODO - Check if there is already a dedicated arena in the server
+        // TODO - Check if there is already a dedicated arena in the server or
+        // the arena exists
         creationState = CreationState.ARENA_MODE;
         player.sendMessage(TextUtils.option(c -> {
             if (creationState.equals(CreationState.ARENA_MODE)) {
@@ -130,8 +131,6 @@ public class CreateCommand implements CommandExecutor {
                         "- Please name your arena")));
             }
         }, TextColors.LIGHT_PURPLE, "Multi-Arena"));
-
-        return CommandResult.success();
     }
 
     @Listener
@@ -164,7 +163,8 @@ public class CreateCommand implements CommandExecutor {
 
                             }
                         }, TextColors.GREEN, "Circle"));
-                        // TODO - Implement the other arena shapes
+                        // TODO - Implement other arena shapes - waiting on
+                        // Region API
                         /*
                          * player.sendMessage(TextUtils.option(c -> {
                          * if(creationState.equals(CreationState.ARENA_SHAPE)) {
@@ -256,9 +256,9 @@ public class CreateCommand implements CommandExecutor {
     }
 
     private void saveArena() {
-        ArenaManager arenaManager = USpleef.access.minigame.getArenaManager();
+        ArenaManager arenaManager = UltimateSpleef.access.minigame.getArenaManager();
         if (dedicatedMode) {
-            UArena arena = new UArena("arena", ArenaShapeType.CIRCLE);
+            UArena arena = new UArena("dedicatedarena");
             arena.getData().setVariable("dedicatedServer", Boolean.class, true);
             arena.getData().setLocation("lobbySpawn", lobbySpawn);
             arena.getData().setVariable("shape", String.class, arenaShape.toString());
@@ -270,7 +270,7 @@ public class CreateCommand implements CommandExecutor {
             arenaManager.addArena(arena);
             arenaManager.saveArenaData(arena.getData());
         } else {
-            UArena arena = new UArena(arenaName, ArenaShapeType.CIRCLE);
+            UArena arena = new UArena(arenaName);
             arena.getData().setVariable("dedicatedServer", Boolean.class, false);
             arena.getData().setLocation("lobbySpawn", lobbySpawn);
             arena.getData().setLocation("joinSign", joinSign);

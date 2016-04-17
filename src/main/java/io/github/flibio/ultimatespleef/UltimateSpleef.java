@@ -24,33 +24,34 @@
  */
 package io.github.flibio.ultimatespleef;
 
+import com.google.inject.Inject;
+import io.github.flibio.minigamecore.Minigame;
+import io.github.flibio.minigamecore.arena.ArenaData;
+import io.github.flibio.ultimatespleef.commands.CreateCommand;
+import io.github.flibio.ultimatespleef.commands.SpleefCommand;
+import io.github.flibio.utils.commands.CommandLoader;
+import io.github.flibio.utils.message.MessageStorage;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
-import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.text.Text;
-
-import com.google.inject.Inject;
-
-import io.github.flibio.minigamecore.Minigame;
-import io.github.flibio.minigamecore.arena.ArenaData;
-import io.github.flibio.ultimatespleef.UArena.ArenaShapeType;
-import io.github.flibio.ultimatespleef.commands.CreateCommand;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 @Plugin(id = "ultimatespleef", name = "Ultimate Spleef", version = "0.1.0")
-public class USpleef {
+public class UltimateSpleef {
 
     @Inject private Logger logger;
 
     @Inject private Game game;
 
-    public String version = USpleef.class.getAnnotation(Plugin.class).version();
+    public String version = UltimateSpleef.class.getAnnotation(Plugin.class).version();
 
     public Minigame minigame;
 
-    public static USpleef access;
+    public static UltimateSpleef access;
+
+    private static MessageStorage messageStorage;
 
     @Listener
     public void onServerInitialize(GameStartingServerEvent event) {
@@ -58,29 +59,24 @@ public class USpleef {
         access = this;
 
         minigame = Minigame.create("UltimateSpleef", this).get();
+        messageStorage = MessageStorage.createInstance(this);
+        messageStorage.defaultMessages("messages");
 
-        registerCommands();
+        CommandLoader.registerCommands(this, TextSerializers.FORMATTING_CODE.serialize(messageStorage.getMessage("command.invalidsource")),
+                new SpleefCommand(),
+                new CreateCommand()
+                );
 
         for (ArenaData arenaData : minigame.getArenaManager().loadArenaData()) {
-            UArena uarena = new UArena(arenaData.getName(), ArenaShapeType.valueOf(arenaData.getVariable("shape", String.class).get()));
+            UArena uarena = new UArena(arenaData.getName());
             uarena.overrideData(arenaData);
             uarena.initialize();
-            // TODO - Check if the arena has all the necessary data
             minigame.getArenaManager().addArena(uarena);
         }
     }
 
-    private void registerCommands() {
-        CommandSpec createCommand = CommandSpec.builder()
-                .description(Text.of("Create a spleef arena"))
-                .executor(new CreateCommand(game))
-                .build();
-        CommandSpec spleefCommand = CommandSpec.builder()
-                .description(Text.of("Control Ultimate Spleef"))
-                .permission("spleef.admin")
-                .child(createCommand, "create")
-                .build();
-        game.getCommandManager().register(this, spleefCommand, "spleef");
+    public static MessageStorage getMessageStorage() {
+        return messageStorage;
     }
 
     public Logger getLogger() {

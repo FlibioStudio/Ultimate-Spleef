@@ -66,8 +66,8 @@ public class UArena extends Arena {
 		CIRCLE
 	}
 
-	public UArena(String arenaName, ArenaShapeType type) {
-		super(arenaName, Sponge.getGame(), USpleef.access);
+	public UArena(String arenaName) {
+		super(arenaName, Sponge.getGame(), UltimateSpleef.access);
 	}
 	
 	public void initialize() {
@@ -97,7 +97,7 @@ public class UArena extends Arena {
 						lobbyCountdownTask.cancel();
 					}
 					lobbyCountdownTime--;
-				}).interval(1, TimeUnit.SECONDS).submit(USpleef.access);
+				}).interval(1, TimeUnit.SECONDS).submit(UltimateSpleef.access);
 			}
 		});
 		
@@ -135,7 +135,7 @@ public class UArena extends Arena {
 						broadcast(Text.of(TextColors.GRAY,"The game has begun!"));
 					}
 					gameCountdown--;
-				}).interval(1, TimeUnit.SECONDS).submit(USpleef.access);
+				}).interval(1, TimeUnit.SECONDS).submit(UltimateSpleef.access);
 			}
 		});
 	}
@@ -146,7 +146,7 @@ public class UArena extends Arena {
 			player.kick(Text.of(TextColors.RED,"The game is full!"));
 			return;
 		}
-		if(getArenaState().equals(ArenaStates.LOBBY_WAITING)||getArenaState().equals(ArenaStates.LOBBY_COUNTDOWN)) {
+		if(getCurrentState().equals(ArenaStates.LOBBY_WAITING)||getCurrentState().equals(ArenaStates.LOBBY_COUNTDOWN)) {
 			getOnlinePlayers().add(player);
 			//Teleport the player to the lobby
 			player.setLocationSafely(lobbySpawn.add(0,1,0));
@@ -167,13 +167,13 @@ public class UArena extends Arena {
 	public void removeOnlinePlayer(Player player) {
 		getOnlinePlayers().remove(player);
 		broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has left the game!"));
-		if(getArenaState().equals(ArenaStates.LOBBY_COUNTDOWN)&&getOnlinePlayers().size()<minPlayers) {
+		if(getCurrentState().equals(ArenaStates.LOBBY_COUNTDOWN)&&getOnlinePlayers().size()<minPlayers) {
 			lobbyCountdownTask.cancel();
 			arenaStateChange(ArenaStates.LOBBY_WAITING);
 			Sponge.getGame().getServer().getBroadcastChannel().send(Text.of(TextColors.RED,"The lobby countdown has been cancelled!"));
 			lobbyCountdownTime = 30;
 		}
-		if(getArenaState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()==0) {
+		if(getCurrentState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()==0) {
 			//Reset the arena
 			lobbyCountdownTime = 30;
 			for(Location<World> loc : blocks) {
@@ -182,7 +182,7 @@ public class UArena extends Arena {
 			gameCountdown = 10;
 			arenaStateChange(ArenaStates.LOBBY_WAITING);
 			broadcast(Text.of(TextColors.RED,"There are not enough people to play!"));
-		} if(getArenaState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()<minPlayers) {
+		} if(getCurrentState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()<minPlayers) {
 			
 		}
 	}
@@ -190,7 +190,7 @@ public class UArena extends Arena {
 	@Listener
 	public void onMove(DisplaceEntityEvent.Move.TargetPlayer event) {
 		Player player = event.getTargetEntity();
-		if(getOnlinePlayers().contains(player)&&getArenaState().equals(ArenaStates.GAME_PLAYING)) {
+		if(getOnlinePlayers().contains(player)&&getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
 			if(player.getLocation().getBlockY()<circleCenter.getBlockY()&&player.get(Keys.GAME_MODE).get().equals(GameModes.SURVIVAL)) {
 				broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has died!"));
 				player.setLocation(circleCenter.add(0, 10, 0));
@@ -205,7 +205,7 @@ public class UArena extends Arena {
 		if(!playerOptional.isPresent()) return;
 		Player player = playerOptional.get();
 		if(getOnlinePlayers().contains(player)&&blocks.contains(event.getTargetBlock().getLocation().get())) {
-			if(getArenaState().equals(ArenaStates.GAME_PLAYING)) {
+			if(getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
 				event.getTargetBlock().getLocation().get().setBlockType(BlockTypes.AIR);
 				player.playSound(SoundTypes.DIG_STONE, event.getTargetBlock().getLocation().get().getPosition(), 2);
 			}
