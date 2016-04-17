@@ -24,6 +24,8 @@
  */
 package io.github.flibio.ultimatespleef.commands;
 
+import io.github.flibio.utils.commands.ParentCommand;
+
 import io.github.flibio.minigamecore.arena.ArenaManager;
 import io.github.flibio.ultimatespleef.UArena;
 import io.github.flibio.ultimatespleef.UltimateSpleef;
@@ -55,6 +57,7 @@ import org.spongepowered.api.world.World;
 import java.util.ArrayList;
 import java.util.Optional;
 
+@ParentCommand(parentCommand = SpleefCommand.class)
 @Command(aliases = {"create"}, permission = "ultimatespleef.admin.create")
 public class CreateCommand extends BaseCommandExecutor<Player> {
 
