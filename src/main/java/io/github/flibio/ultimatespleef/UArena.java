@@ -71,8 +71,8 @@ public class UArena extends Arena {
 	}
 	
 	public void initialize() {
-		lobbySpawn = getData().getLocation("lobbySpawn").get();
-		circleRad = getData().getVariable("circlerad", Integer.class).get();
+		lobbySpawn = getData().getLocation("lobby").get();
+		circleRad = (int) getData().getLocation("circleedge").get().getPosition().distance(lobbySpawn.getPosition());
 		circleCenter = getData().getLocation("circlecenter").get();
 		blocks = getCircle(circleCenter,circleRad);
 
@@ -167,66 +167,68 @@ public class UArena extends Arena {
 	public void removeOnlinePlayer(Player player) {
 		getOnlinePlayers().remove(player);
 		broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has left the game!"));
-		if(getCurrentState().equals(ArenaStates.LOBBY_COUNTDOWN)&&getOnlinePlayers().size()<minPlayers) {
-			lobbyCountdownTask.cancel();
-			arenaStateChange(ArenaStates.LOBBY_WAITING);
-			Sponge.getGame().getServer().getBroadcastChannel().send(Text.of(TextColors.RED,"The lobby countdown has been cancelled!"));
-			lobbyCountdownTime = 30;
-		}
-		if(getCurrentState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()==0) {
-			//Reset the arena
-			lobbyCountdownTime = 30;
-			for(Location<World> loc : blocks) {
-				loc.setBlockType(BlockTypes.QUARTZ_BLOCK);
-			}
-			gameCountdown = 10;
-			arenaStateChange(ArenaStates.LOBBY_WAITING);
-			broadcast(Text.of(TextColors.RED,"There are not enough people to play!"));
-		} if(getCurrentState().equals(ArenaStates.GAME_PLAYING)&&getOnlinePlayers().size()<minPlayers) {
-			
-		}
-	}
-	
-	@Listener
-	public void onMove(DisplaceEntityEvent.Move.TargetPlayer event) {
-		Player player = event.getTargetEntity();
-		if(getOnlinePlayers().contains(player)&&getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
-			if(player.getLocation().getBlockY()<circleCenter.getBlockY()&&player.get(Keys.GAME_MODE).get().equals(GameModes.SURVIVAL)) {
-				broadcast(Text.of(TextColors.YELLOW,player.getName(),TextColors.GRAY," has died!"));
-				player.setLocation(circleCenter.add(0, 10, 0));
-				player.offer(Keys.GAME_MODE, GameModes.SPECTATOR);
-			}
-		}
-	}
-	
-	@Listener
-	public void onRightClick(InteractBlockEvent event) {
-		Optional<Player> playerOptional = event.getCause().first(Player.class);
-		if(!playerOptional.isPresent()) return;
-		Player player = playerOptional.get();
-		if(getOnlinePlayers().contains(player)&&blocks.contains(event.getTargetBlock().getLocation().get())) {
-			if(getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
-				event.getTargetBlock().getLocation().get().setBlockType(BlockTypes.AIR);
-				player.playSound(SoundTypes.DIG_STONE, event.getTargetBlock().getLocation().get().getPosition(), 2);
-			}
-		}
-	}
-	
-	private ArrayList<Location<World>> getCircle(Location<World> center, int r) {
-		ArrayList<Location<World>> locations = new ArrayList<Location<World>>();
-		int cx = center.getBlockX();
-		int cy = center.getBlockY();
-		int cz = center.getBlockZ();
-		World w = center.getExtent();
-		int rSquared = r * r;
-		for(int x = cx - r; x <= cx +r; x++) {
-			for(int z = cz - r; z <= cz +r; z++) {
-				if((cx - x) * (cx -x) + (cz - z) * (cz - z) <= rSquared) {
-					locations.add(new Location<World>(w,x,cy,z));
-				}
-			}
-		}
-		return locations;
-	}
-	
+		if(getCurrentState().equals(ArenaStates.LOBBY_COUNTDOWN)&& getOnlinePlayers().size() < minPlayers) {
+            lobbyCountdownTask.cancel();
+            arenaStateChange(ArenaStates.LOBBY_WAITING);
+            Sponge.getGame().getServer().getBroadcastChannel().send(Text.of(TextColors.RED, "The lobby countdown has been cancelled!"));
+            lobbyCountdownTime = 30;
+        }
+        if (getCurrentState().equals(ArenaStates.GAME_PLAYING) && getOnlinePlayers().size() == 0) {
+            // Reset the arena
+            lobbyCountdownTime = 30;
+            for (Location<World> loc : blocks) {
+                loc.setBlockType(BlockTypes.QUARTZ_BLOCK);
+            }
+            gameCountdown = 10;
+            arenaStateChange(ArenaStates.LOBBY_WAITING);
+            broadcast(Text.of(TextColors.RED, "There are not enough people to play!"));
+        }
+        if (getCurrentState().equals(ArenaStates.GAME_PLAYING) && getOnlinePlayers().size() < minPlayers) {
+
+        }
+    }
+
+    @Listener
+    public void onMove(DisplaceEntityEvent.Move.TargetPlayer event) {
+        Player player = event.getTargetEntity();
+        if (getOnlinePlayers().contains(player) && getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
+            if (player.getLocation().getBlockY() < circleCenter.getBlockY() && player.get(Keys.GAME_MODE).get().equals(GameModes.SURVIVAL)) {
+                broadcast(Text.of(TextColors.YELLOW, player.getName(), TextColors.GRAY, " has died!"));
+                player.setLocation(circleCenter.add(0, 10, 0));
+                player.offer(Keys.GAME_MODE, GameModes.SPECTATOR);
+            }
+        }
+    }
+
+    @Listener
+    public void onRightClick(InteractBlockEvent event) {
+        Optional<Player> playerOptional = event.getCause().first(Player.class);
+        if (!playerOptional.isPresent())
+            return;
+        Player player = playerOptional.get();
+        if (getOnlinePlayers().contains(player) && blocks.contains(event.getTargetBlock().getLocation().get())) {
+            if (getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
+                event.getTargetBlock().getLocation().get().setBlockType(BlockTypes.AIR);
+                player.playSound(SoundTypes.DIG_STONE, event.getTargetBlock().getLocation().get().getPosition(), 2);
+            }
+        }
+    }
+
+    private ArrayList<Location<World>> getCircle(Location<World> center, int r) {
+        ArrayList<Location<World>> locations = new ArrayList<Location<World>>();
+        int cx = center.getBlockX();
+        int cy = center.getBlockY();
+        int cz = center.getBlockZ();
+        World w = center.getExtent();
+        int rSquared = r * r;
+        for (int x = cx - r; x <= cx + r; x++) {
+            for (int z = cz - r; z <= cz + r; z++) {
+                if ((cx - x) * (cx - x) + (cz - z) * (cz - z) <= rSquared) {
+                    locations.add(new Location<World>(w, x, cy, z));
+                }
+            }
+        }
+        return locations;
+    }
+
 }
