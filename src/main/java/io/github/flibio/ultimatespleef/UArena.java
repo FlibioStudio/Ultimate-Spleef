@@ -75,6 +75,9 @@ public class UArena extends Arena {
 		circleRad = (int) getData().getLocation("circleedge").get().getPosition().distance(lobbySpawn.getPosition());
 		circleCenter = getData().getLocation("circlecenter").get();
 		blocks = getCircle(circleCenter,circleRad);
+		blocks.forEach(block -> {
+		    block.setBlockType(BlockTypes.QUARTZ_BLOCK);
+		});
 
 		//On lobby countdown
 		addArenaStateRunnable(ArenaStates.LOBBY_COUNTDOWN, new Runnable() {
