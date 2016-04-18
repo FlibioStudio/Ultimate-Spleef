@@ -72,8 +72,8 @@ public class UArena extends Arena {
 	
 	public void initialize() {
 		lobbySpawn = getData().getLocation("lobby").get();
-		circleRad = (int) getData().getLocation("circleedge").get().getPosition().distance(lobbySpawn.getPosition());
 		circleCenter = getData().getLocation("circlecenter").get();
+		circleRad = (int) getData().getLocation("circleedge").get().getPosition().distance(circleCenter.getPosition());
 		blocks = getCircle(circleCenter,circleRad);
 		blocks.forEach(block -> {
 		    block.setBlockType(BlockTypes.QUARTZ_BLOCK);

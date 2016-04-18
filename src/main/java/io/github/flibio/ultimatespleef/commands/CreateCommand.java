@@ -25,6 +25,7 @@
 package io.github.flibio.ultimatespleef.commands;
 
 import io.github.flibio.minigamecore.arena.ArenaData;
+import io.github.flibio.minigamecore.arena.ArenaManager;
 import io.github.flibio.ultimatespleef.PreArena;
 import io.github.flibio.ultimatespleef.UArena;
 import io.github.flibio.ultimatespleef.UltimateSpleef;
@@ -32,6 +33,7 @@ import io.github.flibio.utils.commands.BaseCommandExecutor;
 import io.github.flibio.utils.commands.Command;
 import io.github.flibio.utils.commands.ParentCommand;
 import io.github.flibio.utils.message.MessageStorage;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
@@ -50,6 +52,7 @@ import java.util.Optional;
 public class CreateCommand extends BaseCommandExecutor<Player> {
 
     private MessageStorage messages = UltimateSpleef.getMessageStorage();
+    private ArenaManager arenaManager = UltimateSpleef.access.minigame.getArenaManager();
     private PreArena pArena;
 
     @Override
@@ -64,10 +67,15 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         Optional<String> sOpt = args.<String>getOne("name");
         Optional<Boolean> bOpt = args.<Boolean>getOne("dedicated");
         if (sOpt.isPresent() && bOpt.isPresent()) {
-            // TODO check if arena name exists
-            pArena = new PreArena(sOpt.get(), bOpt.get());
-            UltimateSpleef.access.minigame.getArenaManager().addArena(pArena);
-            creationUi(src);
+            String name = sOpt.get();
+            boolean dedicated = bOpt.get();
+            if (dedicated ? arenaManager.getArenas().size() > 0 : arenaManager.arenaExists(name)) {
+                pArena = new PreArena(name, dedicated);
+                UltimateSpleef.access.minigame.getArenaManager().addArena(pArena);
+                creationUi(src);
+            } else {
+                src.sendMessage(messages.getMessage("command.create.exists"));
+            }
         } else {
             src.sendMessage(messages.getMessage("command.error"));
         }
@@ -76,6 +84,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
     private void creationUi(Player player) {
         ArenaData data = pArena.getData();
         if (isAllDataPresent()) {
+            Sponge.getServer().getOnlinePlayers().forEach(p -> {
+                p.kick(messages.getMessage("command.create.finishing"));
+            });
             UArena arena = new UArena(data.getName());
             pArena.getData().setTriggerPlayerEvents(true);
             arena.overrideData(pArena.getData());
@@ -95,10 +106,10 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         } else {
             Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder()
                     .onClick(TextActions.executeCallback(c -> {
-                        data.setLocation("lobby", player.getLocation());
+                        data.setLocation("lobby", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
                     })).build();
-            player.sendMessage(messages.getMessage("command.create.lobbyloc", "location", button));
+            player.sendMessage(messages.getMessage("command.create.lobbyloc", "location", "").toBuilder().append(button).build());
         }
         // Check if circle center is present
         if (data.getLocation("circlecenter").isPresent()) {
@@ -106,10 +117,10 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         } else {
             Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder()
                     .onClick(TextActions.executeCallback(c -> {
-                        data.setLocation("circlecenter", player.getLocation());
+                        data.setLocation("circlecenter", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
                     })).build();
-            player.sendMessage(messages.getMessage("command.create.circlecenter", "location", button));
+            player.sendMessage(messages.getMessage("command.create.circlecenter", "location", "").toBuilder().append(button).build());
         }
         // Check if the circle edge is present
         if (data.getLocation("circleedge").isPresent()) {
@@ -117,10 +128,10 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         } else {
             Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder()
                     .onClick(TextActions.executeCallback(c -> {
-                        data.setLocation("circleedge", player.getLocation());
+                        data.setLocation("circleedge", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
                     })).build();
-            player.sendMessage(messages.getMessage("command.create.circleedge", "location", button));
+            player.sendMessage(messages.getMessage("command.create.circleedge", "location", "").toBuilder().append(button).build());
         }
         if (!data.getVariable("dedicated", Boolean.class).get()) {
             // Check if the join sign is present
@@ -130,10 +141,10 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
             } else {
                 Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder()
                         .onClick(TextActions.executeCallback(c -> {
-                            data.setLocation("joinsign", player.getLocation());
+                            data.setLocation("joinsign", player.getLocation().sub(0, 1, 0));
                             creationUi(player);
                         })).build();
-                player.sendMessage(messages.getMessage("command.create.joinsign", "location", button));
+                player.sendMessage(messages.getMessage("command.create.joinsign", "location", "").toBuilder().append(button).build());
             }
         }
     }
