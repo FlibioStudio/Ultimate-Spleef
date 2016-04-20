@@ -24,6 +24,8 @@
  */
 package io.github.flibio.ultimatespleef.commands;
 
+import org.spongepowered.api.block.BlockTypes;
+
 import io.github.flibio.minigamecore.arena.ArenaData;
 import io.github.flibio.minigamecore.arena.ArenaManager;
 import io.github.flibio.ultimatespleef.PreArena;
@@ -42,6 +44,8 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.blockray.BlockRay;
+import org.spongepowered.api.util.blockray.BlockRayHit;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -71,7 +75,7 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
             boolean dedicated = bOpt.get();
             if (dedicated ? arenaManager.getArenas().size() > 0 : arenaManager.arenaExists(name)) {
                 pArena = new PreArena(name, dedicated);
-                UltimateSpleef.access.minigame.getArenaManager().addArena(pArena);
+                arenaManager.addArena(pArena);
                 creationUi(src);
             } else {
                 src.sendMessage(messages.getMessage("command.create.exists"));
@@ -91,9 +95,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
             pArena.getData().setTriggerPlayerEvents(true);
             arena.overrideData(pArena.getData());
             arena.initialize();
-            UltimateSpleef.access.minigame.getArenaManager().removeArena(pArena.getData().getName());
-            UltimateSpleef.access.minigame.getArenaManager().addArena(arena);
-            UltimateSpleef.access.minigame.getArenaManager().saveArenaData(arena.getData());
+            arenaManager.removeArena(pArena.getData().getName());
+            arenaManager.addArena(arena);
+            arenaManager.saveArenaData(arena.getData());
         }
         player.sendMessage(messages.getMessage("command.create.headline"));
         player.sendMessage(messages.getMessage("command.create.name", "name", data.getName()));
@@ -139,9 +143,20 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
                 player.sendMessage(messages
                         .getMessage("command.create.joinsign", "location", readableLoc(data.getLocation("joinsign").get())));
             } else {
-                Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder()
-                        .onClick(TextActions.executeCallback(c -> {
-                            data.setLocation("joinsign", player.getLocation().sub(0, 1, 0));
+                Text button = Text.of(TextColors.GRAY, "[", TextColors.GREEN, "SET", TextColors.GRAY, "]").toBuilder().onClick(
+                        TextActions.executeCallback(c -> {
+                            Optional<BlockRayHit<World>> rOpt = BlockRay.from(player).filter(BlockRay.onlyAirFilter()).build().end();
+                            if (rOpt.isPresent()) {
+                                Location<World> loc = rOpt.get().getLocation();
+                                if (loc.getBlockType().equals(BlockTypes.WALL_SIGN) || loc.getBlockType().equals(BlockTypes.STANDING_SIGN)) {
+                                    data.setLocation("joinsign", loc);
+                                    creationUi(player);
+                                } else {
+                                    player.sendMessage(messages.getMessage("command.create.invalidsign"));
+                                }
+                            } else {
+                                player.sendMessage(messages.getMessage("command.create.invalidsign"));
+                            }
                             creationUi(player);
                         })).build();
                 player.sendMessage(messages.getMessage("command.create.joinsign", "location", "").toBuilder().append(button).build());
