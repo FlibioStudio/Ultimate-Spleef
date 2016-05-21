@@ -73,12 +73,24 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         if (sOpt.isPresent() && bOpt.isPresent()) {
             String name = sOpt.get();
             boolean dedicated = bOpt.get();
-            if (dedicated ? arenaManager.getArenas().size() > 0 : arenaManager.arenaExists(name)) {
-                pArena = new PreArena(name, dedicated);
-                arenaManager.addArena(pArena);
-                creationUi(src);
+            // Check if the arena is dedicated or not
+            if (dedicated) {
+                // Check if the server already has a dedicated arena
+                if (arenaManager.getArenas().size() > 0) {
+                    src.sendMessage(messages.getMessage("command.create.exists"));
+                } else {
+                    pArena = new PreArena(name, true);
+                    arenaManager.addArena(pArena);
+                    creationUi(src);
+                }
             } else {
-                src.sendMessage(messages.getMessage("command.create.exists"));
+                if (arenaManager.getArena(name).isPresent()) {
+                    src.sendMessage(messages.getMessage("command.create.exists"));
+                } else {
+                    pArena = new PreArena(name, false);
+                    arenaManager.addArena(pArena);
+                    creationUi(src);
+                }
             }
         } else {
             src.sendMessage(messages.getMessage("command.error"));
@@ -112,7 +124,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
                     .onClick(TextActions.executeCallback(c -> {
                         data.setLocation("lobby", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
-                    })).build();
+                    }))
+                    .onHover(TextActions.showText(messages.getMessage("command.create.hoverinfo", "where", "being stood on")))
+                    .build();
             player.sendMessage(messages.getMessage("command.create.lobbyloc", "location", "").toBuilder().append(button).build());
         }
         // Check if circle center is present
@@ -123,7 +137,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
                     .onClick(TextActions.executeCallback(c -> {
                         data.setLocation("circlecenter", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
-                    })).build();
+                    }))
+                    .onHover(TextActions.showText(messages.getMessage("command.create.hoverinfo", "where", "being stood on")))
+                    .build();
             player.sendMessage(messages.getMessage("command.create.circlecenter", "location", "").toBuilder().append(button).build());
         }
         // Check if the circle edge is present
@@ -134,7 +150,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
                     .onClick(TextActions.executeCallback(c -> {
                         data.setLocation("circleedge", player.getLocation().sub(0, 1, 0));
                         creationUi(player);
-                    })).build();
+                    }))
+                    .onHover(TextActions.showText(messages.getMessage("command.create.hoverinfo", "where", "being stood on")))
+                    .build();
             player.sendMessage(messages.getMessage("command.create.circleedge", "location", "").toBuilder().append(button).build());
         }
         if (!data.getVariable("dedicated", Boolean.class).get()) {
@@ -158,7 +176,9 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
                                 player.sendMessage(messages.getMessage("command.create.invalidsign"));
                             }
                             creationUi(player);
-                        })).build();
+                        }))
+                        .onHover(TextActions.showText(messages.getMessage("command.create.hoverinfo", "where", "being looked at")))
+                        .build();
                 player.sendMessage(messages.getMessage("command.create.joinsign", "location", "").toBuilder().append(button).build());
             }
         }
