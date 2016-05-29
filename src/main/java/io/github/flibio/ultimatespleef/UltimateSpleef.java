@@ -24,9 +24,12 @@
  */
 package io.github.flibio.ultimatespleef;
 
+import java.util.Optional;
+
 import com.google.inject.Inject;
 import io.github.flibio.minigamecore.Minigame;
 import io.github.flibio.minigamecore.arena.ArenaData;
+import io.github.flibio.ultimatespleef.arena.UArena;
 import io.github.flibio.ultimatespleef.commands.CreateCommand;
 import io.github.flibio.ultimatespleef.commands.SpleefCommand;
 import io.github.flibio.utils.commands.CommandLoader;
@@ -68,10 +71,9 @@ public class UltimateSpleef {
                 );
 
         for (ArenaData arenaData : minigame.getArenaManager().loadArenaData()) {
-            UArena uarena = new UArena(arenaData.getName());
-            uarena.overrideData(arenaData);
-            uarena.initialize();
-            minigame.getArenaManager().addArena(uarena);
+            Optional<UArena> uarena = UArena.createArena(arenaData.getName(), arenaData);
+            if (uarena.isPresent())
+                minigame.getArenaManager().addArena(uarena.get());
         }
     }
 

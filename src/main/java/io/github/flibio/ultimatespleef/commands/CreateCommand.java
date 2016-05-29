@@ -24,18 +24,17 @@
  */
 package io.github.flibio.ultimatespleef.commands;
 
-import org.spongepowered.api.block.BlockTypes;
-
 import io.github.flibio.minigamecore.arena.ArenaData;
 import io.github.flibio.minigamecore.arena.ArenaManager;
 import io.github.flibio.ultimatespleef.PreArena;
-import io.github.flibio.ultimatespleef.UArena;
 import io.github.flibio.ultimatespleef.UltimateSpleef;
+import io.github.flibio.ultimatespleef.arena.UArena;
 import io.github.flibio.utils.commands.BaseCommandExecutor;
 import io.github.flibio.utils.commands.Command;
 import io.github.flibio.utils.commands.ParentCommand;
 import io.github.flibio.utils.message.MessageStorage;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
@@ -99,17 +98,16 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
 
     private void creationUi(Player player) {
         ArenaData data = pArena.getData();
-        if (isAllDataPresent()) {
+        if (UArena.isDataPresent(data)) {
             Sponge.getServer().getOnlinePlayers().forEach(p -> {
                 p.kick(messages.getMessage("command.create.finishing"));
             });
-            UArena arena = new UArena(data.getName());
-            pArena.getData().setTriggerPlayerEvents(true);
-            arena.overrideData(pArena.getData());
-            arena.initialize();
-            arenaManager.removeArena(pArena.getData().getName());
-            arenaManager.addArena(arena);
-            arenaManager.saveArenaData(arena.getData());
+            Optional<UArena> uarena = UArena.createArena(data.getName(), data);
+            if (uarena.isPresent()) {
+                arenaManager.removeArena(pArena.getData().getName());
+                arenaManager.addArena(uarena.get());
+                arenaManager.saveArenaData(uarena.get().getData());
+            }
         }
         player.sendMessage(messages.getMessage("command.create.headline"));
         player.sendMessage(messages.getMessage("command.create.name", "name", data.getName()));
@@ -184,17 +182,8 @@ public class CreateCommand extends BaseCommandExecutor<Player> {
         }
     }
 
-    private boolean isAllDataPresent() {
-        ArenaData data = pArena.getData();
-        if (data.getLocation("lobby").isPresent() && data.getLocation("circlecenter").isPresent() && data.getLocation("circleedge").isPresent()) {
-            return !data.getVariable("dedicated", Boolean.class).get() ? data.getLocation("joinsign").isPresent() : true;
-        } else {
-            return false;
-        }
-    }
-
     private String readableLoc(Location<World> loc) {
-        return loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ();
+        return loc.getBlockX() + " : " + loc.getBlockY() + " : " + loc.getBlockZ();
     }
 
 }
