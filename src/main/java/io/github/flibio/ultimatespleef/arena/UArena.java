@@ -35,12 +35,16 @@ import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.gamemode.GameModes;
+import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class UArena extends Arena {
 
@@ -49,9 +53,14 @@ public class UArena extends Arena {
     private CountdownRunnable lobbyCountdown = new CountdownRunnable(this);
     private GameCountdownRunnable gameCountdown = new GameCountdownRunnable(this);
     private GamePlayingRunnable gamePlaying = new GamePlayingRunnable(this);
+    private GameOverRunnable gameOver = new GameOverRunnable(this);
 
     private int minPlayers = 1;
     private int maxPlayers = 8;
+
+    private List<UUID> alivePlayers = new ArrayList<>();
+    private boolean lobbyWaiting = true;
+    private int lobbyTimer = 15;
 
     private Location<World> lobbySpawn;
     private int circleRad;
@@ -61,10 +70,11 @@ public class UArena extends Arena {
 
     protected UArena(String arenaName, ArenaData data) {
         super(arenaName, Sponge.getGame(), UltimateSpleef.access);
+        overrideData(data);
+
         getData().addPreventHungerLoss(ArenaStates.ALL);
         getData().addPreventPlayerDamage(ArenaStates.ALL);
-        getData().addPreventBlockModify(ArenaStates.ALL);
-        overrideData(data);
+        // getData().addPreventBlockModify(ArenaStates.ALL);
 
         lobbySpawn = getData().getLocation("lobby").get();
         circleCenter = getData().getLocation("circlecenter").get();
@@ -77,7 +87,44 @@ public class UArena extends Arena {
         addArenaStateRunnable(ArenaStates.LOBBY_COUNTDOWN, lobbyCountdown);
         addArenaStateRunnable(ArenaStates.GAME_COUNTDOWN, gameCountdown);
         addArenaStateRunnable(ArenaStates.GAME_PLAYING, gamePlaying);
+        addArenaStateRunnable(ArenaStates.GAME_OVER, gameOver);
         resetArena();
+
+        Sponge.getScheduler().createTaskBuilder().execute(r -> {
+            if (lobbyWaiting) {
+                if (lobbyTimer == 0) {
+                    lobbyWaiting = false;
+                    if (onlinePlayers.size() >= minPlayers) {
+                        arenaStateChange(ArenaStates.LOBBY_COUNTDOWN);
+                    }
+                }
+                lobbyTimer--;
+            } else {
+                lobbyTimer = 15;
+            }
+        }).async().interval(1, TimeUnit.SECONDS).submit(UltimateSpleef.access);
+
+        // Temporary fix until ChangeDataHolderEvent is implemented
+        Sponge.getScheduler().createTaskBuilder().execute(r -> {
+            onlinePlayers.forEach(uuid -> {
+                Optional<Player> pOpt = resolvePlayer(uuid);
+                if (pOpt.isPresent()) {
+                    Sponge.getScheduler().createTaskBuilder().execute(c -> {
+                        pOpt.get().offer(Keys.FOOD_LEVEL, 20);
+                    }).submit(UltimateSpleef.access);
+                }
+            });
+        }).async().interval(5, TimeUnit.SECONDS).submit(UltimateSpleef.access);
+
+    }
+
+    @Listener
+    public void onBlockModify(ChangeBlockEvent event) {
+        if (event.getCause().root() instanceof Player) {
+            if (onlinePlayers.contains(((Player) event.getCause().root()).getUniqueId())) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     public static Optional<UArena> createArena(String arenaName, ArenaData data) {
@@ -99,11 +146,13 @@ public class UArena extends Arena {
                 // Allow the player to join
                 resetPlayer(player);
                 broadcast(messages.getMessage("arena.join", "player", player.getName()));
-                onlinePlayers.add(player);
+                onlinePlayers.add(player.getUniqueId());
                 // Check if the game can be started
-                if (onlinePlayers.size() >= minPlayers) {
-                    // Start the lobby countdown
-                    arenaStateChange(ArenaStates.LOBBY_COUNTDOWN);
+                if (!lobbyWaiting) {
+                    if (onlinePlayers.size() >= minPlayers) {
+                        // Start the lobby countdown
+                        arenaStateChange(ArenaStates.LOBBY_COUNTDOWN);
+                    }
                 }
             } else {
                 // The game is already in progress
@@ -114,7 +163,7 @@ public class UArena extends Arena {
 
     @Override
     public void removeOnlinePlayer(Player player) {
-        onlinePlayers.remove(player);
+        onlinePlayers.remove(player.getUniqueId());
         broadcast(messages.getMessage("arena.exit", "player", player.getName()));
         ArenaState currentState = getCurrentState();
         if (currentState.equals(ArenaStates.LOBBY_COUNTDOWN) && onlinePlayers.size() < minPlayers) {
@@ -126,7 +175,7 @@ public class UArena extends Arena {
             // There are not enough players to continue the game
             arenaStateChange(ArenaStates.LOBBY_WAITING);
             broadcast(messages.getMessage("arena.notenoughplayers"));
-            for (Player p : onlinePlayers) {
+            for (Player p : resolvePlayers(onlinePlayers)) {
                 resetPlayer(p);
             }
             resetArena();
@@ -135,7 +184,7 @@ public class UArena extends Arena {
             gameCountdown.cancelCountdown();
             arenaStateChange(ArenaStates.LOBBY_WAITING);
             broadcast(messages.getMessage("arena.gamecountstop"));
-            for (Player p : onlinePlayers) {
+            for (Player p : resolvePlayers(onlinePlayers)) {
                 resetPlayer(p);
             }
             resetArena();
@@ -148,6 +197,19 @@ public class UArena extends Arena {
 
     public Location<World> getCenter() {
         return circleCenter;
+    }
+
+    public void removeAlive(UUID uuid) {
+        alivePlayers.remove(uuid);
+    }
+
+    public List<UUID> getAlive() {
+        return alivePlayers;
+    }
+
+    public void resetOnlinePlayers() {
+        onlinePlayers.clear();
+        alivePlayers.clear();
     }
 
     private ArrayList<Location<World>> getCircle(Location<World> center, int r) {
@@ -167,7 +229,7 @@ public class UArena extends Arena {
         return locations;
     }
 
-    private void resetArena() {
+    public void resetArena() {
         blocks.forEach(block -> {
             block.setBlockType(BlockTypes.QUARTZ_BLOCK);
             block.sub(0, 1, 0).setBlockType(BlockTypes.AIR);
@@ -181,11 +243,16 @@ public class UArena extends Arena {
                 }
             });
         });
+        alivePlayers.addAll(onlinePlayers);
+        lobbyWaiting = true;
+        lobbyTimer = 15;
     }
 
     private void resetPlayer(Player player) {
-        player.setLocation(lobbySpawn.add(0, 1, 0));
+        player.setLocationSafely(lobbySpawn.add(0, 1, 0));
         player.offer(Keys.GAME_MODE, GameModes.SURVIVAL);
+        player.offer(Keys.HEALTH, 20.0);
+        player.offer(Keys.FOOD_LEVEL, 20);
     }
 
     private void failed(Player player, String messageKey) {

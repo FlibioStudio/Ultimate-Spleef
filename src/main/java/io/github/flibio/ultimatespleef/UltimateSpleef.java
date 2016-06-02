@@ -75,6 +75,10 @@ public class UltimateSpleef {
             if (uarena.isPresent())
                 minigame.getArenaManager().addArena(uarena.get());
         }
+
+        if (!minigame.getEconomyManager().foundEconomy()) {
+            logger.warn("Could not find an economy plugin! Players will not be rewarded!");
+        }
     }
 
     public static MessageStorage getMessageStorage() {

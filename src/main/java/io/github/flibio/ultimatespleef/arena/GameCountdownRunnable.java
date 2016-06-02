@@ -56,7 +56,7 @@ public class GameCountdownRunnable implements Runnable {
     public void run() {
         List<Location<World>> usedLocs = new ArrayList<>();
         List<Location<World>> blocks = arena.getBlocks();
-        arena.getOnlinePlayers().forEach(player -> {
+        arena.resolvePlayers(arena.getOnlinePlayers()).forEach(player -> {
             player.offer(Keys.GAME_MODE, GameModes.SPECTATOR);
             player.offer(Keys.FLYING_SPEED, 0.0);
             Location<World> loc = blocks.get((new Random()).nextInt(blocks.size()));
@@ -67,19 +67,20 @@ public class GameCountdownRunnable implements Runnable {
             player.setLocationSafely(loc.add(0, 2, 0));
         });
         usedLocs.clear();
+        countdownTime = 5;
         countdownTask = Sponge.getScheduler().createTaskBuilder().execute(t -> {
             String label = "seconds";
             if (countdownTime == 1) {
                 label = "second";
             }
             if (countdownTime > 0) {
-                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 1);
+                arena.broadcastSound(SoundTypes.CLICK, 5, 1);
                 arena.broadcast(messages.getMessage("arena.gamestarting", "count", String.valueOf(countdownTime), "label", label));
             }
             if (countdownTime == 0) {
-                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 3);
+                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 1);
                 arena.broadcast(messages.getMessage("arena.gamestarted"));
-                for (Player player : arena.getOnlinePlayers()) {
+                for (Player player : arena.resolvePlayers(arena.getOnlinePlayers())) {
                     player.offer(Keys.GAME_MODE, GameModes.SURVIVAL);
                     player.offer(Keys.FLYING_SPEED, 0.05);
                 }

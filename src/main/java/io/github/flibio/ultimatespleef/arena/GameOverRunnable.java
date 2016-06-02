@@ -1,0 +1,67 @@
+/*
+ * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ *
+ * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package io.github.flibio.ultimatespleef.arena;
+
+import io.github.flibio.minigamecore.arena.ArenaStates;
+
+import io.github.flibio.minigamecore.economy.EconomyManager;
+import io.github.flibio.ultimatespleef.UltimateSpleef;
+import io.github.flibio.utils.message.MessageStorage;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.Text;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public class GameOverRunnable implements Runnable {
+
+    private MessageStorage messages = UltimateSpleef.getMessageStorage();
+    private EconomyManager economyManager = UltimateSpleef.access.minigame.getEconomyManager();
+
+    private UArena arena;
+
+    public GameOverRunnable(UArena arena) {
+        this.arena = arena;
+    }
+
+    public void run() {
+        List<Player> onlinePlayers = arena.resolvePlayers(arena.getOnlinePlayers());
+        // Reward all of the players
+        if (economyManager.foundEconomy()) {
+            for (Player player : onlinePlayers) {
+                player.sendMessage(messages.getMessage("arena.reward", "reward",
+                        economyManager.getCurrency().get().format(BigDecimal.valueOf(10)), "reason", Text.of("participating")));
+                economyManager.addCurrency(player.getUniqueId(), BigDecimal.valueOf(10));
+            }
+        }
+        arena.resetArena();
+        arena.resetOnlinePlayers();
+        arena.arenaStateChange(ArenaStates.LOBBY_WAITING);
+        for (Player player : onlinePlayers) {
+            arena.addOnlinePlayer(player);
+        }
+    }
+
+}

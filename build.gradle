@@ -33,8 +33,8 @@ dependencies {
     compile 'org.spongepowered:spongeapi:4.1.0-SNAPSHOT'
     compile 'com.github.flibio:updatifier:v1.4.0:api'
     compile 'net.minecrell.mcstats:statslite-sponge:0.2.2'
-    compile 'com.github.flibiostudio:utils:1.5.2'
-    compile 'com.github.MinigameCore:MinigameCore:0.2.1'
+    compile 'com.github.flibiostudio:utils:1.6.2'
+    compile 'com.github.MinigameCore:MinigameCore:0.2.6'
 }
 
 shadowJar {

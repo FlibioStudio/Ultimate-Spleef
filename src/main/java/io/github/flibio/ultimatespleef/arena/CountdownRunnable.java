@@ -48,6 +48,7 @@ public class CountdownRunnable implements Runnable {
     }
 
     public void run() {
+        countdownTime = 30;
         arena.broadcast(messages.getMessage("arena.joininggame", "count", String.valueOf(countdownTime), "label", "seconds"));
         countdownTask = Sponge.getScheduler().createTaskBuilder().execute(t -> {
             String label = "seconds";
@@ -58,11 +59,11 @@ public class CountdownRunnable implements Runnable {
                 arena.broadcast(messages.getMessage("arena.joininggame", "count", String.valueOf(countdownTime), "label", label));
             }
             if (countdownTime <= 5 && countdownTime > 0) {
-                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 1);
+                arena.broadcastSound(SoundTypes.CLICK, 5, 1);
                 arena.broadcast(messages.getMessage("arena.joininggame", "count", String.valueOf(countdownTime), "label", label));
             }
             if (countdownTime == 0) {
-                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 3);
+                arena.broadcastSound(SoundTypes.NOTE_PIANO, 5, 1);
                 arena.arenaStateChange(ArenaStates.GAME_COUNTDOWN);
                 cancelCountdown();
             }
