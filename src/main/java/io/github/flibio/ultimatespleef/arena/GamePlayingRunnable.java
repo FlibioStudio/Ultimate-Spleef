@@ -24,6 +24,9 @@
  */
 package io.github.flibio.ultimatespleef.arena;
 
+import org.spongepowered.api.event.cause.NamedCause;
+
+import org.spongepowered.api.event.cause.Cause;
 import io.github.flibio.minigamecore.arena.ArenaStates;
 import io.github.flibio.minigamecore.economy.EconomyManager;
 import io.github.flibio.ultimatespleef.UltimateSpleef;
@@ -107,7 +110,8 @@ public class GamePlayingRunnable implements Runnable {
                 Location<World> targetLoc = lOpt.get();
                 if (arena.getOnlinePlayers().contains(player.getUniqueId()) && arena.getBlocks().contains(targetLoc)) {
                     if (arena.getCurrentState().equals(ArenaStates.GAME_PLAYING)) {
-                        targetLoc.setBlockType(BlockTypes.AIR);
+                        targetLoc.getExtent().setBlockType(targetLoc.getBlockPosition(), BlockTypes.AIR, true,
+                                Cause.of(NamedCause.owner(UltimateSpleef.access.pluginContainer)));
                         player.playSound(SoundTypes.DIG_STONE, targetLoc.getPosition(), 3);
                         cooldown.add(player.getUniqueId());
                         Sponge.getScheduler().createTaskBuilder().execute(c -> {

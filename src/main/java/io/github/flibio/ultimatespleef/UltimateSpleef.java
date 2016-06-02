@@ -24,8 +24,6 @@
  */
 package io.github.flibio.ultimatespleef;
 
-import java.util.Optional;
-
 import com.google.inject.Inject;
 import io.github.flibio.minigamecore.Minigame;
 import io.github.flibio.minigamecore.arena.ArenaData;
@@ -39,7 +37,10 @@ import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.serializer.TextSerializers;
+
+import java.util.Optional;
 
 @Plugin(id = "ultimatespleef", name = "Ultimate Spleef", version = "0.1.0")
 public class UltimateSpleef {
@@ -47,6 +48,8 @@ public class UltimateSpleef {
     @Inject private Logger logger;
 
     @Inject private Game game;
+
+    @Inject public PluginContainer pluginContainer;
 
     public String version = UltimateSpleef.class.getAnnotation(Plugin.class).version();
 

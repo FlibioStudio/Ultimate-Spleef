@@ -35,8 +35,6 @@ import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.gamemode.GameModes;
-import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -74,7 +72,7 @@ public class UArena extends Arena {
 
         getData().addPreventHungerLoss(ArenaStates.ALL);
         getData().addPreventPlayerDamage(ArenaStates.ALL);
-        // getData().addPreventBlockModify(ArenaStates.ALL);
+        getData().addPreventBlockModify(ArenaStates.ALL);
 
         lobbySpawn = getData().getLocation("lobby").get();
         circleCenter = getData().getLocation("circlecenter").get();
@@ -116,15 +114,6 @@ public class UArena extends Arena {
             });
         }).async().interval(5, TimeUnit.SECONDS).submit(UltimateSpleef.access);
 
-    }
-
-    @Listener
-    public void onBlockModify(ChangeBlockEvent event) {
-        if (event.getCause().root() instanceof Player) {
-            if (onlinePlayers.contains(((Player) event.getCause().root()).getUniqueId())) {
-                event.setCancelled(true);
-            }
-        }
     }
 
     public static Optional<UArena> createArena(String arenaName, ArenaData data) {
