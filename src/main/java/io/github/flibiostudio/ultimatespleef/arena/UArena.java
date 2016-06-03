@@ -1,7 +1,7 @@
 /*
- * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ * This file is part of Ultimate Spleef, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) 2015 - 2016 FlibioStudio
  * Copyright (c) Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,13 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.github.flibio.ultimatespleef.arena;
+
+package io.github.flibiostudio.ultimatespleef.arena;
+
+import io.github.flibiostudio.ultimatespleef.UltimateSpleef;
 
 import io.github.flibio.minigamecore.arena.Arena;
 import io.github.flibio.minigamecore.arena.ArenaData;
 import io.github.flibio.minigamecore.arena.ArenaState;
 import io.github.flibio.minigamecore.arena.ArenaStates;
-import io.github.flibio.ultimatespleef.UltimateSpleef;
 import io.github.flibio.utils.message.MessageStorage;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockTypes;

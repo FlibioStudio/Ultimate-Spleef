@@ -1,7 +1,7 @@
 /*
- * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ * This file is part of Ultimate Spleef, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) 2015 - 2016 FlibioStudio
  * Copyright (c) Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,14 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.github.flibio.ultimatespleef;
+
+package io.github.flibiostudio.ultimatespleef;
+
+import io.github.flibiostudio.ultimatespleef.arena.UArena;
+import io.github.flibiostudio.ultimatespleef.commands.CreateCommand;
+import io.github.flibiostudio.ultimatespleef.commands.SpleefCommand;
 
 import com.google.inject.Inject;
 import io.github.flibio.minigamecore.Minigame;
 import io.github.flibio.minigamecore.arena.ArenaData;
-import io.github.flibio.ultimatespleef.arena.UArena;
-import io.github.flibio.ultimatespleef.commands.CreateCommand;
-import io.github.flibio.ultimatespleef.commands.SpleefCommand;
 import io.github.flibio.utils.commands.CommandLoader;
 import io.github.flibio.utils.message.MessageStorage;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.util.Optional;
 
-@Plugin(id = "ultimatespleef", name = "Ultimate Spleef", version = "0.1.0")
+@Plugin(id = "ultimatespleef")
 public class UltimateSpleef {
 
     @Inject private Logger logger;
@@ -50,8 +52,6 @@ public class UltimateSpleef {
     @Inject private Game game;
 
     @Inject public PluginContainer pluginContainer;
-
-    public String version = UltimateSpleef.class.getAnnotation(Plugin.class).version();
 
     public Minigame minigame;
 
@@ -61,7 +61,7 @@ public class UltimateSpleef {
 
     @Listener
     public void onServerInitialize(GameStartingServerEvent event) {
-        logger.info("Ultimate Spleef v" + version + " is enabling!");
+        logger.info("Ultimate Spleef is enabling!");
         access = this;
 
         minigame = Minigame.create("UltimateSpleef", this).get();

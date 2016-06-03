@@ -1,7 +1,7 @@
 /*
- * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ * This file is part of Ultimate Spleef, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) 2015 - 2016 FlibioStudio
  * Copyright (c) Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,7 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.github.flibio.ultimatespleef;
+
+package io.github.flibiostudio.ultimatespleef;
 
 import org.spongepowered.api.Sponge;
 

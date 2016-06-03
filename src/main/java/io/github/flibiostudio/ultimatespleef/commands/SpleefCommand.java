@@ -1,7 +1,7 @@
 /*
- * This file is part of UltimateSpleef, licensed under the MIT License (MIT).
+ * This file is part of Ultimate Spleef, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2015 - 2016 Flibio
+ * Copyright (c) 2015 - 2016 FlibioStudio
  * Copyright (c) Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,9 +22,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package io.github.flibio.ultimatespleef.commands;
 
-import io.github.flibio.ultimatespleef.UltimateSpleef;
+package io.github.flibiostudio.ultimatespleef.commands;
+
+import io.github.flibiostudio.ultimatespleef.UltimateSpleef;
+
 import io.github.flibio.utils.commands.AsyncCommand;
 import io.github.flibio.utils.commands.BaseCommandExecutor;
 import io.github.flibio.utils.commands.Command;

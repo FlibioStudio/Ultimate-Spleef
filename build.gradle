@@ -1,19 +1,20 @@
 plugins {
-    id 'java'
-    id 'eclipse'
     id 'maven'
-    id 'com.github.hierynomus.license' version '0.12.1'
-    id 'net.ellune.blossom' version '1.0.1'
+    id 'org.spongepowered.plugin' version '0.5.1'
+    id 'net.minecrell.licenser' version '0.1.5'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-
-group 'io.github.flibio'
-version '0.1.0'
-
 defaultTasks 'licenseFormat', 'clean', 'build'
+
+sponge.plugin.id = project.name.toLowerCase().replaceAll("\\s","")
+
+ext {
+    pluginPackage = "${project.group}"
+    pluginClass = "${pluginPackage}.UltimateSpleef"
+}
+
+archivesBaseName = project.name.replaceAll("\\s","")
 
 repositories {
     mavenCentral()
@@ -30,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:4.1.0-SNAPSHOT'
+    compile 'org.spongepowered:spongeapi:${project.apiVersion}'
     compile 'com.github.flibio:updatifier:v1.4.0:api'
     compile 'net.minecrell.mcstats:statslite-sponge:0.2.2'
     compile 'com.github.flibiostudio:utils:1.6.4'
@@ -56,31 +57,18 @@ artifacts {
 }
 
 license {
-
-    // The project properties to use
-    ext.name = project.name
-    ext.owner = project.owner
-    ext.inceptionYear = project.inceptionYear
-    ext.currentYear = project.currentYear
-
-    // The file that contains the license header
-    header file('HEADER.txt')
-
-    // The source sets to apply the license to
-    sourceSets = project.sourceSets
-
-    ignoreFailures false
-    strictCheck true
-
-    mapping {
-        java = 'SLASHSTAR_STYLE'
+    ext {
+        name = project.name
+        organization = project.organization
+        url = project.url
+        inceptionYear = project.inceptionYear
+        currentYear = project.currentYear
     }
+    
+    header = rootProject.file('HEADER.txt')
+    include '**/*.java'
 }
 
 task wrapper(type: Wrapper) {
   gradleVersion = '2.11'
-}
-
-blossom {
-    replaceToken '@project.version@', project.version, 'src/main/java/io/github/flibio/ultimatespleef/PluginInfo.java'
 }
